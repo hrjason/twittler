@@ -3,25 +3,240 @@
   <head>
     <script src="jquery.js"></script>
     <script src="data_generator.js"></script>
+    <style>
+      body {
+        background: #529dff url('img/background.png') repeat-x bottom;
+        background-attachment: fixed;
+        color: #333333;
+        font-family: Helvetica;
+        margin: 0;
+        padding: 0;
+      }
+      #header {
+        width: 100%;
+        height: 70px;
+        margin: 0px 0px 10px 0px;
+        padding: 0;
+        background: #FFF;
+        border-bottom: 1px solid #CCC;
+        text-align: center;
+        position: relative;
+        display: block;
+      }
+      #header img {
+        width: auto;
+        height: 40px;
+        margin: 15px;
+      }
+      h1 {
+        font-size: 30px;
+        color: #FFF;
+      }
+      .container {
+        width: 600px;
+        margin: 0px auto;
+        padding: 0px;
+        position: relative;
+        display: block;
+      } 
+      #tweetrec {
+        width: 100%;
+        background: #FFF;
+        padding: 15px;
+        margin: 5px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        position: relative;
+        display: block;
+      }
+      #tweetrec .username {
+        width: 100%;
+        margin: 0px;
+        padding: 0px;
+        background: #FFF;
+        font-size: 14px;
+        color: #333;
+        font-weight: 600;
+        position: relative;
+        display: block;
+      }
+      #tweetrec .username:hover{
+        font-size: 14px;
+        color: #2aa9e0;
+      }
+      #tweetrec .message {
+        width: 100%;
+        margin: 0px;
+        padding: 4px 0px 4px 0px;
+        background: #FFF;
+        position: relative;
+        display: block;
+      }
+      #tweetrec .message p{
+        font-size: 12px;
+        margin: 0px;
+        padding: 0px;
+        font-weight: 400;
+      }
+      #tweetrec .date {
+        width: 100%;
+        margin: 0px;
+        padding: 0px;
+        background: #FFF;
+        position: relative;
+        display: block;
+      }
+      #tweetrec .date p{
+        font-size: 10px;
+        color: #666;
+        margin: 0px;
+        padding: 0px;
+        font-weight: 400;
+      }
+
+    </style>
   </head>
   <body>
     <script>
 
       $(document).ready(function(){
         var $body = $('body');
-        $body.html('');
+        //loads content into the <body> however this line is not necessary 
+        //$body.html('');
+        //Create jQuery Objects with the tweetbox and userbox divs
+        var $tweetbox = $('.tweetbox');
+        var $userbox = $('.userbox');
+        //Objects for inputting user data
+        var $usertweet = $('.usertweet');
+        var $tweetbutton = $('#tweetbutton');
+        var $tweetmessage = $('#tweetmessage');
+        //Object for H1
+        var $header = $('h1');
 
-        var index = streams.home.length - 1;
-        while(index >= 0){
-          var tweet = streams.home[index];
-          var $tweet = $('<div></div>');
-          $tweet.text('@' + tweet.user + ': ' + tweet.message);
-          $tweet.appendTo($body);
-          index -= 1;
+        //Create a function to load newsfeed
+        function newsFeed () {
+          //Set index to iterate from the first tweet.
+          //Note it is best to put the index outside the setInterval function to avoid
+          //stupid repeats of clumps of code. aka reset of index!
+          var index = 0 ;
+          //Create a function to refresh tweets
+          function newTweets () {
+            //Since the end is not specified, best to use a while loop to iterate
+            //Make sure index is less than streams.home array to constantly keep looping till finished
+            while(index < streams.home.length) {
+              //Create variable to hold repeat code. i.e the tweet with corresponding index
+              var tweet = streams.home[index];
+
+              //debug - should increment index to console.
+              //console.log(index);
+
+              //prependTo to tweet box some code!
+              $tweetbox.prepend("<div id='tweetrec'>" +
+                                  "<div class='username'>" + tweet.user + "</div>" + 
+                                  "<div class='message'><p>" + tweet.message + "</p></div>" +
+                                  "<div class='date'><p>" + tweet.created_at + "</p></div>" +
+                                "</div>");
+
+              //Create event handler for username on clicks. 
+              $('.username').on('click', function () {
+                  //hold username variable. remember to use this so it doesn't select every div.
+                  var username = $(this).closest('.username').context.innerHTML;
+                  //call userHistory function
+                  userHistory(username);
+                  //remove the tweetbox div
+                  $tweetbox.remove();
+              });
+              //increment index to move up tweets.
+              index++
+            };
+          };
+          //setInterval Timer
+          setInterval(newTweets, 1200);
         }
+        //invoke newsFeed 
+        newsFeed();
 
+        //create userHistory function
+        function userHistory (username){
+          $('h1').text('Tweets from ' + username);
+          //create a shortcut variable to load user location
+          var handle = streams.users[username];
+          //create a one time call to get the history length of that user
+          var historyLength = handle.length;
+
+          //since there are previous tweets, use a for loop to get them ALL
+          for(var i=0; i < historyLength; i++) {
+            $userbox.prepend("<div id='tweetrec'>" +
+                                "<div class='username'>" + username + "</div>" + 
+                                "<div class='message'><p>" + handle[i].message + "</p></div>" +
+                                "<div class='date'><p>" + handle[i].created_at + "</p></div>" +
+                              "</div>");
+          }
+          //set index as history length
+          var index = historyLength;
+          //function set up new function to update Feed
+          function updateUser () {
+            //set up a while loop to get the rest
+            while(index < handle.length) {
+
+              //debug
+              //console.log(historyLength);
+
+              $userbox.prepend("<div id='tweetrec'>" +
+                                  "<div class='username'>" + username + "</div>" + 
+                                  "<div class='message'><p>" + handle[index].message + "</p></div>" +
+                                  "<div class='date'><p>" + handle[index].created_at + "</p></div>" +
+                                "</div>");
+              //increment index
+              index++;
+            }
+          };
+          //setInterval Timer
+          setInterval(updateUser, 1200);
+        };
+        /*
+        //Event handler for usertweet
+        $tweetbutton.on('click', function() {
+          var text = $tweetmessage.val();
+          writeTweet(text);
+
+          var text = $tweetmessage.val();
+          var tweet = {};
+          tweet.user = 'visitor';
+          tweet.message = text;
+          tweet.created_at = new Date();
+          writeTweet(tweet);
+          $tweetmessage.val('');
+          
+        });*/
       });
+
 
     </script>
   </body>
+  <div id="full-width">
+      <div id="header">
+        <div class="container">
+          <a href="index.html"><img src="img/logo.png"></a>
+        </div>
+      </div>
+      <div class="container">
+        <!-- Add Tweet -->
+        <!--
+        <div class="usertweet">
+            <input type="text" id="tweetmessage" value="Say something, I've given up on you">
+            <button type="submit" id="tweetbutton">tweet</button>
+        </div>
+        -->
+        <!-- Create div to house tweets -->
+        <div class="container">
+            <h1>Twittler Feed</h1>
+        </div>
+        <div class="tweetbox">
+        </div>
+        <!-- Create div to house user specifi tweets -->
+        <div class="userbox">
+      </div>
+  </div>
+  </div>
 </html>
